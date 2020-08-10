@@ -1,0 +1,108 @@
+library(gridExtra)
+library(ggplot2)
+library(raster)
+library(forcats)
+library(readr)
+library(png)
+library(grid)
+library(patchwork)
+library(ggrepel)
+
+OneGame <- read_csv("OneGameEvents.csv")  # get events
+OneGamePlayers <- read_csv("OneGamePlayers.csv") #get PlayerId's and names
+OneGamePlayers <- OneGamePlayers[,-1]
+OneGame <- ConvertIDOneGame(OneGame) # change PlayerId's to names
+
+i= 1  # 1 = home, 2 = away
+df <- filter(OneGame, TeamId == teams[i])
+ind=grep("SubstitutionOff",df$`type/displayName`)   # get rownumber of first substitution  
+df=df[1:ind[1],]                                     # filter events till first substitution 
+
+df <- Meters(df)  # x- and y-coordinates to meters
+df2<-df           # copy the df to get the players(nodes) on their average position by touch instead of pass.
+df<- passesTo(df) # get pass receipents 
+
+nodes <- df2 %>% 
+  filter(isTouch == "TRUE") %>% 
+  group_by(PlayerId, TeamId) %>% 
+  dplyr::summarise(xm = mean(xm, na.rm=T), ym = mean(ym, na.rm=T), events = n()) %>% 
+  na.omit() %>% 
+  as.data.frame()
+
+
+# get passer and receipents count
+passer <- df %>% 
+  mutate(`outcomeType/displayName`= fct_explicit_na(`outcomeType/displayName`, "SuccessFul")) %>%
+  filter(`type/displayName` == "Pass" & `outcomeType/displayName` == "Successful") %>% 
+  dplyr::select(from = PlayerId, to = to) %>% 
+  group_by(from, to) %>% 
+  dplyr::summarise(n = n()) %>% 
+  na.omit()
+
+
+edges <- left_join(passer, 
+                   nodes,
+                   by = c("from" = "PlayerId"))
+
+edges <- left_join(edges, 
+                   nodes ,
+                   by = c("to" = "PlayerId"))
+
+# passes without distinction between direction
+edges <- edges %>% 
+  group_by(player1 = pmin(from, to), player2 = pmax(from, to)) %>% 
+  dplyr::summarise(n = sum(n), x = xm.x[1], y = ym.x[1], xend = xm.y[1], yend = ym.y[1])
+
+# passes with distinction between direction
+edges <- edges %>% 
+  group_by(player1 = from, player2 = to) %>% 
+  dplyr::summarise(n = sum(n), x = xm.x[1], y = ym.x[1], xend = xm.y[1], yend = ym.y[1])
+  
+  
+edges1$n <- ifelse(edges$n<5,NA, edges$n) #minimum number of passes needed to show in graph
+edges1 <- segementsDf(edges,100,100,50) #offset lines
+
+p <- createPitchGrass(10600, 7040, "#314b57", "#B3CED9", "#314b57", "#15393D")  #FC Rstats function to create pitch, changed a little
+png(filename = "Graphs/Passmap2-3.png",
+    units="in", 
+    width=(6), 
+    height=(4), 
+    pointsize=12, 
+    res=300)
+
+path <- paste0("Clubs/",teams[1],".png") #get path to logo
+img <- readPNG(path)
+g <- rasterGrob(img, interpolate=TRUE)   # club logo
+
+layout1 <- c(
+  area(t = 1, l = 1, b = 7, r = 6),
+  area(t = 1, l = 1, b = 1, r = 1)
+)
+
+
+
+pp <- p +  
+ 
+  ggforce::geom_link(data = edges1, aes(x, y, xend = xend, yend = yend, size =n, alpha = n) , 
+                     col = "#EFF2F4", lineend = 'round', arrow = arrow()) +
+  geom_point(data = nodes, aes(xm, ym, size = events, alpha=events), pch = 21, fill = "red") +
+  scale_fill_identity() +
+  
+
+  geom_label_repel(data = nodes, aes(xm, ym, label = PlayerId), size = 2.5, family = 'Spartan-Regular') +
+  labs(title = teams[i],
+       subtitle = paste("vs.", teams[2])) +
+  theme( plot.background = element_rect(fill = "#314b57", colour = "#314b57"),
+         plot.margin = margin(t = 0.25, r = 0.25, b = 0.25, l = 0.25, "cm"),
+         panel.background = element_rect(fill = "#314b57", colour = "#314b57"),
+         plot.title = element_text(color = "#EFF2F4", family = 'Spartan-Regular',hjust = 0.5, size = 10),
+         plot.subtitle = element_text(color = "#EFF2F4", family ='Spartan-Regular',hjust = 0.5, size = 8),
+         legend.position = "none") #+
+
+p2 <- pp+g  + plot_layout(design = layout1)  &
+  theme(plot.background = element_rect(fill ="#36454f", colour = "#36454f"),
+        panel.background =element_rect(fill ="#36454f", colour = "#36454f") )
+
+p2
+
+  dev.off()
