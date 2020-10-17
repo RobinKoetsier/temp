@@ -1,0 +1,34 @@
+ ggplot() + 
+      #   geom_step(data = myDataHome(),
+      #              aes(minute,cumulativexG,color = name),size= 2) +
+      geom_step(data = myDataBoth(),
+                aes(expandedMinute,cumulativexG,color = side),size= 2) +
+      geom_point(data= myDataBoth() %>% filter(Goal == "Goal"),aes(expandedMinute,cumulativexG, color = side),
+                 shape = 19,size=4)+
+      
+      geom_text_repel(data = myDataBoth() %>% filter(Goal=="Goal"), 
+                      aes(x=expandedMinute,y=cumulativexG,color=side,label = paste(minute,"'",player, round(xG,2), "xG")),
+                      fill="white",hjust=1, nudge_y= .1,
+                      family = "Spartan-Medium", size =3)+
+      labs(y="Expected goals",
+           x = "Minuut",
+           title = glue::glue("
+         <span style='color:green4'>{home}:  {sum(Home()$Goal)} - ({round(sum(Home()$xG),2)} xG)</span><br>
+                            {away}:  {sum(Away()$Goal)}  -  ({round(sum(Away()$xG),2)} xG)
+                            "),
+           caption = "@tussendelinies") + 
+      scale_color_manual(values=c("home" = "green4",
+                                  "away"= "black"),
+                         labels = c(away,home),
+                         guide = guide_legend(reverse = TRUE))+
+      scale_x_continuous(breaks = round(seq(0, pmax(90,maxminute()), by = 15),1)) +
+      theme(plot.title = ggtext::element_markdown(  
+        size = 15,  
+        family = "Spartan-Bold",
+        hjust = 0),
+        plot.subtitle = element_markdown(hjust=0.5, size =13, family = "Spartan-Bold"),
+        plot.caption = element_markdown(hjust=0.5, size =10, family = "Spartan-Medium"),
+        plot.background = element_rect(fill= "#f2f4f5",color = "#f2f4f5"),
+        panel.background = element_rect(fill= "#f2f4f5",color = "#f2f4f5"),
+        legend.title = element_blank(),
+        legend.position = "none")
