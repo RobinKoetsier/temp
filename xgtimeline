@@ -24,6 +24,4 @@ shot_data <- rbind(start_h,start_a,shot_data,end_h,end_a)
                                   a = "blue")) +
    geom_point(data= match %>% filter(result == "Goal"),shape = 19,size=4,
               aes(x=minute,y=cumulativexG, color = h_a)) +
-
- 
   theme_minimal() 
