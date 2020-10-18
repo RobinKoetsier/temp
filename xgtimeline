@@ -1,29 +1,53 @@
-match <- get_match_shots(5466)
+match <- get_match_shots(14830)
 
-
+match$h_team
 
 shot_data <- match %>% select(minute,result,xG,player,h_a) %>% mutate(cumulativexG = cumsum(xG))
 
 
-home <- shot_data %>% dplyr::filter(h_a == "h")
+home <- shot_data %>% filter(h_a == "h")
 homexG <- max(home$cumulativexG)
-away <- shot_data %>% dplyr::filter(h_a == "a")
+away <- shot_data %>% filter(h_a == "a")
 awayxG <- max(away$cumulativexG)
 
 start_h <- data.frame(0,"Missed",0,"Player","h",0) %>% 
   setNames(c("minute","result","xG","player","h_a","cumulativexG"))
 start_a <- data.frame(0,"Missed",0,"Player","a",0)%>% 
   setNames(c("minute","result","xG","player","h_a","cumulativexG"))
-end_h <- data.frame(90,"Missed",0,"Player","h",homexG) %>% 
+end_h <- data.frame(pmax(90,max(home$minute)),"Missed",0,"Player","h",homexG) %>% 
   setNames(c("minute","result","xG","player","h_a","cumulativexG"))
-end_a <- data.frame(90,"Missed",0,"Player","a",awayxG)%>% 
+end_a <- data.frame(pmax(90,max(away$minute)),"Missed",0,"Player","a",awayxG)%>% 
   setNames(c("minute","result","xG","player","h_a","cumulativexG"))
 
 temp <- rbind(start_h,start_a,shot_data,end_h,end_a)
 
 shot_data <- temp
 
+ggplot() + 
+  geom_step(data =shot_data,aes(minute, cumulativexG,color = h_a),size= 2) +
+  scale_color_manual(values = c(h = "red",
+                                a = "blue")) +
+  geom_point(data= shot_data %>% filter(result == "Goal"),shape = 19,size=4,
+             aes(x=minute,y=cumulativexG, color = h_a)) +
+  
+  
+  theme_minimal() + 
+  labs(y="Expected goals",
 
+       caption = "Data: Understat.com | Created by @RobinWilhelmus") + 
+  
+  
+  coord_cartesian(xlim=c(0,max(shot_data$minute)),
+                  ylim=c(0,ceiling(max(shot_data$cumulativexG)))) +
+  scale_x_continuous(breaks = round(seq(min(0), max(shot_data$minute), by = 15),1)) +
+  theme(plot.title = ggtext::element_markdown(  
+    size = 15,  
+    family = "Spartan-Bold",
+    hjust = 0.5),
+    plot.subtitle = element_markdown(hjust=0.5, size =13, family = "Spartan-Bold"),
+    plot.background = element_rect(fill= "#f2f4f5",color = "#f2f4f5"),
+    panel.background = element_rect(fill= "#f2f4f5",color = "#f2f4f5"),
+    legend.position = "none")
 
 ggplot() + 
   geom_step(data =shot_data,aes(minute, cumulativexG,color = h_a),size= 2)
