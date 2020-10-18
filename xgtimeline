@@ -1,4 +1,8 @@
-shot_data <- shot_data %>% select(minute,result,xG,player,h_a,cumulativexG) %>% mutate(cumulativexG = cumsum(xG))
+match <- get_match_shots(5466)
+
+
+
+shot_data <- match %>% select(minute,result,xG,player,h_a) %>% mutate(cumulativexG = cumsum(xG))
 
 
 home <- shot_data %>% filter(h_a == "h")
@@ -7,7 +11,7 @@ away <- shot_data %>% filter(h_a == "a")
 awayxG <- max(away$cumulativexG)
 
 start_h <- data.frame(0,"Missed",0,"Player","h",0) %>% 
-setNames(c("minute","result","xG","player","h_a","cumulativexG"))
+  setNames(c("minute","result","xG","player","h_a","cumulativexG"))
 start_a <- data.frame(0,"Missed",0,"Player","a",0)%>% 
   setNames(c("minute","result","xG","player","h_a","cumulativexG"))
 end_h <- data.frame(90,"Missed",0,"Player","h",homexG) %>% 
@@ -15,13 +19,11 @@ end_h <- data.frame(90,"Missed",0,"Player","h",homexG) %>%
 end_a <- data.frame(90,"Missed",0,"Player","a",awayxG)%>% 
   setNames(c("minute","result","xG","player","h_a","cumulativexG"))
 
-shot_data <- rbind(start_h,start_a,shot_data,end_h,end_a)
+temp <- rbind(start_h,start_a,shot_data,end_h,end_a)
+
+shot_data <- temp
 
 
- ggplot() + 
-    geom_step(data =shot_data,aes(minute, cumulativexG,color = h_a),size= 2) +
-    scale_color_manual(values = c(h = "red",
-                                  a = "blue")) +
-   geom_point(data= match %>% filter(result == "Goal"),shape = 19,size=4,
-              aes(x=minute,y=cumulativexG, color = h_a)) +
-  theme_minimal() 
+
+ggplot() + 
+  geom_step(data =shot_data,aes(minute, cumulativexG,color = h_a),size= 2)
