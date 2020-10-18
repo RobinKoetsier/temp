@@ -5,9 +5,9 @@ match <- get_match_shots(5466)
 shot_data <- match %>% select(minute,result,xG,player,h_a) %>% mutate(cumulativexG = cumsum(xG))
 
 
-home <- shot_data %>% filter(h_a == "h")
+home <- shot_data %>% dplyr::filter(h_a == "h")
 homexG <- max(home$cumulativexG)
-away <- shot_data %>% filter(h_a == "a")
+away <- shot_data %>% splyr::filter(h_a == "a")
 awayxG <- max(away$cumulativexG)
 
 start_h <- data.frame(0,"Missed",0,"Player","h",0) %>% 
