@@ -2,7 +2,8 @@ match <- get_match_shots(14830)
 
 match$h_team
 
-shot_data <- match %>% select(minute,result,xG,player,h_a) %>% mutate(cumulativexG = cumsum(xG))
+shot_data <- match %>% select(minute,result,xG,player,h_a) %>% group_by(h_a) %>%
+  mutate(cumulativexG = cumsum(xG))
 
 
 home <- shot_data %>% filter(h_a == "h")
