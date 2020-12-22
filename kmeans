@@ -1,0 +1,50 @@
+data("USArrests")      # Loading the data set
+df <- scale(USArrests) # Scaling the dat
+library(tidyverse)
+
+# View the firt 3 rows of the data
+head(df, n = 3)
+
+kmeans(x, centers, iter.max = 10, nstart = 1)
+
+install.packages("factoextra")
+library(factoextra)
+install.packages("cluster")
+library(cluster)
+set.seed(123)
+km.res <- kmeans(df, 9,nstart = 25)
+print(km.res)
+aggregate(USArrests, by=list(cluster=km.res$cluster), mean)
+dd <- cbind(df, cluster = km.res$cluster)
+head(dd)
+
+x <- sample(1:100,100)
+y <- sample(1:100,100)
+endx <- sample(1:100,100)
+endy <- sample(1:100,100)
+
+df <- data.frame(x,y,endx,endy)
+
+ggplot(dd %>% filter(cluster < 5)) + geom_segment(aes(x=x,y=y,xend=endx,yend=endy, colour=as.factor(cluster)),arrow=arrow()) +
+  scale_color_manual(values = c("1" ="red",
+                                  "2"="yellow",
+                                  "3"="blue",
+                                  "4"="green"))
+
+fviz_nbclust(df, kmeans, method = "silhouette") #8
+
+
+set.seed(123)
+gap_stat <- clusGap(df, FUN = kmeans, nstart = 25,
+                    K.max = 10, B = 50)
+# Print the result
+print(gap_stat, method = "firstmax")
+fviz_gap_stat(gap_stat)    #9
+
+
+kmean_withinss <- function(k) {
+  cluster <- kmeans(rescale_df, k)
+  return (cluster$tot.withinss)
+}
+kmean_withinss(2)
+
