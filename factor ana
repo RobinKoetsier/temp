@@ -1,0 +1,26 @@
+#Installing the Psych package and loading it
+install.packages("psych")
+library(psych)
+#Loading the dataset
+library(readxl)
+df <- read_excel("C:/Users/rk/Downloads/Search results.xlsx") %>% select(1,4,5,7,8,9,10,14,15)
+colnames(df)
+library(tidyverse)
+df2 <- df %>% remove_rownames %>% column_to_rownames(var="Player")
+
+
+
+
+
+
+#Remove rows with missing values and keep only complete cases
+df2=df2[complete.cases(df2),]
+#Create the correlation matrix from bfi_data
+
+bfi_cor <- cor(df3)
+#Factor analysis of the data
+factors_data <- fa(r = bfi_cor, nfactors = 6)
+#Getting the factor loadings and model analysis
+factors_data
+df3 <- t(df2)
+t(df2)
