@@ -43,3 +43,11 @@ ggplot(df,aes(Sepal.Length,Sepal.Width)) + geom_point() +
 ```
 
 The number of observations is the same in both data frames.
+
+#let's add colours
+
+
+
+
+
+
