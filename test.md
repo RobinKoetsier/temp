@@ -44,9 +44,22 @@ ggplot(df,aes(Sepal.Length,Sepal.Width)) + geom_point() +
 
 The number of observations is the same in both data frames.
 
-#let's add colours
+let's add colours
 
+```{r}
 
+ggplot(df,aes(Sepal.Length,Sepal.Width)) + geom_point() +
+  labs(title = glue("This plot only shows <span style='color:red'>{df$Species[1]}</span> "),
+       subtitle = glue("It's <span style='color:red'>just </span> that I like the {length(df$Species)}
+                       {df$Species[1]} the **most**")) +
+  theme(plot.title = element_markdown(),
+        plot.subtitle = element_markdown())
+
+```
+This is maybe a bit confusing, but the <span style='color:red'> is for your colour and the </span> ends the colour. If you don't do that, it just keeps everything red.
+** will make it bold, like you see at the end of the subtitle.
+
+Instead of element_text() you use element_markdown() in theme(). Here you can still choose a colour and font and everything else. It will change everything and than does the other thinbgs like <span style='color:red'>
 
 
 
