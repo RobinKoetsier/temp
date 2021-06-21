@@ -1,0 +1,16 @@
+remDr$close()
+
+t = system("docker ps",intern=TRUE)
+system(paste("docker stop ",as.character(strsplit(t[2],split = " ")[[1]][1]),sep=""))
+system("docker run -d -p 4445:4444 selenium/standalone-chrome") 
+link = "https://www.whoscored.com/Matches/1513451/Live/International-European-Championship-2020-North-Macedonia-Netherlands"
+match_link <- link
+remDr <- RSelenium::remoteDriver(remoteServerAddr = "localhost",port = 4445L,browserName = "chrome")
+
+remDr$open() 
+
+#Navigeer naar hoofdpagina
+remDr$navigate(link)
+remDr$screenshot(display = TRUE)
+#Data ophalen
+match_data <- getData(remDr)
