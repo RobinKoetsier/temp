@@ -1,29 +1,6 @@
-GetWedstrijden <- function(Wedstrijd){
-Home <- Wedstrijd %>% filter(TeamId == HomeTeam)
-Away <- Wedstrijd %>% filter(TeamId == AwayTeam)
-
-HomexG <- Home$xG
-AwayxG <- Away$xG
-Home$sum <- cumsum(Home$xG)
-Away$sum <- cumsum(Away$xG)
-
-
-
-game <- calculateChance(HomexG , AwayxG,10000)
-kansen <- data.frame(Wedstrijd$Date[1],Wedstrijd$Home[1],sum(Home$Goal),
-                     sum(Away$Goal),Wedstrijd$Away[2],sum(HomexG),sum(AwayxG),game) %>%
-  set_colnames(c("Datum","ThuisTeam","Thuisgoals","Uitgoals","Uitteam","xGThuis","xGUit","Kans winst thuisteam",
-               "Kans gelijkspel","Kans winst Uitteam"))
-
-return(kansen)
-
-}
-
-
-
 calculateChance<-function(team1,team2,p){
-  #team1 <- HomeXg
-  #team2 <- AwayXg
+  #team1 <- c(0.1,0.2,0.3)
+  #team2 <- c(0.9)
   #p<- 10000
   
   home = 0
