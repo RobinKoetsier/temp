@@ -1,0 +1,66 @@
+df <- read_excel("Export_TDL_NED_2122.xlsx", 
+                                               sheet = "Shots") %>% filter(Type_of_play != "Penalty") 
+
+
+p <- ggplot(df , aes(x,y)) + 
+ # annotate_pitch(fill="#fafcfc") + 
+  stat_binhex(bins = c(20,40))+#,colour= "#038f11") + 
+  #scale_colour_gradientn(colours = c("red","orange","yellow","green4"))+
+  annotate("rect",xmin = 100, xmax = 102, ymin = 44.2, ymax = 55.8, fill = NA, colour = "black", size = 0.4) + #goal
+  annotate("rect",xmin = 83, xmax = 100, ymin = 21.1, ymax = 78.9, fill = NA, colour = "black", size = 0.4) + #penalty
+  annotate("rect",xmin = 94.2, xmax = 100, ymin = 36.8, ymax = 63.2, fill = NA, colour = "black", size = 0.4) + # 6 yard
+  annotate("rect",xmin = 50, xmax = 100, ymin = 0, ymax = 100, fill = NA, colour = "black", size = 0.4) +
+# scale_colour_discrete(aes(alpha=0.1))+
+  
+  coord_flip(xlim=c(65,102),
+                              ylim=c(100,0))+
+  
+ facet_wrap(~name) +
+ # scale_color_manual(alpha=0.5,colour="green") +     e8ede9
+  scale_colour_gradient(low="white",high="#026b0d") +
+scale_fill_gradient(low="white",high="#026b0d",
+#scale_fill_gradientn(colours = c("red","orange","yellow","green4"),
+                      #breaks=c(2, 4, 6, 9),
+breaks=c(4, 8, 12, 15),
+#breaks=c(1,2,3,4,5,6,7),
+               #      labels=c("1-4","5-8","9-12","13+"),
+#labels=c("1","2","3","4","5","6", "7+"),
+                      limits=c(0, 16), guide = "legend") +
+
+labs(title = "From where do the Eredivisie teams shoot?",
+     #subtitle = "Vanaf waar schieten de clubs uit de Eredivisie?",
+     subtitle = "All shots excluding penalty kicks",
+     caption = "@RobinWilhelmus",
+     fill="Number of shots") +
+  guides(fill = guide_legend(reverse = FALSE,
+                             title.position = "top",
+                             label.position = "bottom",
+                             keywidth = 3,
+                             nrow = 1),
+         colour= FALSE) +
+  
+  theme(
+
+    plot.background = element_rect(fill = "#fafcfc", colour = "#fafcfc"), 
+    
+    legend.background = element_rect(fill = "transparent", colour = NA),
+    
+    
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    strip.background = element_rect(colour="white", fill="white"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    legend.text = element_text(hjust=0.5,family="Spartan-Medium"),
+    legend.title  = element_text(hjust=0.5,family="Spartan-Medium"),
+    plot.title = element_text(hjust=0.5,family="Spartan-Bold",colour = "#038f11"),
+    plot.subtitle = element_text(hjust=0.5,family="Spartan-Medium",colour = "#007523"),
+    plot.caption = element_text(family="Spartan-Bold",colour = "#038f11"),
+    panel.background = element_blank(),
+    strip.text = element_markdown(family="Spartan-Medium"),
+    plot.margin = margin(5,5,5,5)) 
