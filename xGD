@@ -1,0 +1,23 @@
+ readxl::read_xlsx("Export_TDL_NED_2122.xlsx",sheet="Shots") %>%
+  filter(Type_of_play != "Penalty") %>%
+  mutate(game=match) %>%
+  separate(match,c("Home","Away")," - ") %>%
+  group_by(game) %>%
+  mutate(xGHome = ifelse(name==Home,xG,0),
+         xGAway = ifelse(name==Away,xG,0)) %>%
+group_by(game) %>%
+  summarise(xG1 = sum(xGHome),
+            xG2 = sum(xGAway),
+            name = name,
+            Home = Home,
+            Away = Away) %>%
+  ungroup() %>%
+  unique() %>%
+  mutate(xG = ifelse(name==Home,xG1,xG2),
+         xG = ifelse(name==Away,xG2,xG1),
+         xGD = ifelse(name == Home,xG1-xG2, xG2-xG1)) %>%
+  select(game,name,xG1,xG2,xGD) %>%
+  group_by(name) %>%
+  mutate(avg=mean(xGD)) %>%
+  ggplot() + geom_point(aes(xGD,fct_reorder(name,avg))) +
+  geom_point(aes(avg,name),colour="red")
