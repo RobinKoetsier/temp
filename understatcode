@@ -1,0 +1,20 @@
+  # to get the EPL results:
+leagues <- c("EPL", "La liga", "Bundesliga", "Serie A", "Ligue 1")
+years <- c(2017:2021)
+playerlist <- list()
+k <- 0
+for(i in leagues){
+  for (j in years) {
+k <-  k+1
+print(k)
+    print(i)
+    print(j)
+  
+df <- understat_league_match_results(league = i, 
+                                     season_start_year = j)
+
+urls <- understat_team_meta(team_name = unique(df$home_team))
+team_players <- understat_team_players_stats(team_url = urls$url)
+playerlist[[k]] <- team_players
+}
+}
