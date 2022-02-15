@@ -1,3 +1,6 @@
+library(worldfootballR)
+library(tidyverse)
+
 #Create vector with all the dates up to today. The first date can be the start of the season.
 dates <- gsub("-","",seq(as.Date("2021-08-01"), Sys.Date(), by="days"))
 
