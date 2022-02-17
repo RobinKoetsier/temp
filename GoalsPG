@@ -1,25 +1,23 @@
 library(tidyverse)
 library(worldfootballR)
-install.packages("ggrepel")
 
 leagues <- read.csv("https://raw.githubusercontent.com/JaseZiv/worldfootballR_data/master/raw-data/all_leages_and_cups/all_competitions.csv") %>%
   filter(tier == "1st") %>%
   filter(season_end_year == 2022) %>%
   filter( !is.na(country)) 
-i<-2
 
 comps <- list()
-for(i in 2:nrow(leagues)){
-df <- get_season_team_stats(country = leagues$country[i], gender = "M", 
-                            season_end_year = "2022", tier = "1st", stat_type = "league_table") %>%
-  group_by(Competition_Name,Country,Squad) %>%
-  summarise(Goals = sum(GF),
-            GoalsA = sum(GA),
-            matches = (sum(MP)/1),
-            GoalsPG = Goals/matches,
-            GoalsAPG = GoalsA/matches)
-print(sum(df$Goals))
-comps[[i]] <- df
+for(i in 2:nrow(leagues)){ #started with 2 to ignore the one with top 5 leagues in it.
+  df <- get_season_team_stats(country = leagues$country[i], gender = "M", 
+                              season_end_year = "2022", tier = "1st", stat_type = "league_table") %>%
+    group_by(Competition_Name,Country,Squad) %>%
+    summarise(Goals = sum(GF),
+              GoalsA = sum(GA),
+              matches = (sum(MP)/1),
+              GoalsPG = Goals/matches,
+              GoalsAPG = GoalsA/matches)
+  print(sum(df$Goals))
+  comps[[i]] <- df
 }
 
 
@@ -29,14 +27,37 @@ goals_df <- data.table::rbindlist(comps) %>%
   unique() 
 
 
-  ggplot(goals_df) +
-  geom_point(aes(GoalsPG,GoalsAPG)) +
-    ggrepel::geom_text_repel(data=goals_df %>% 
-                filter(GoalsAPG>2.3|
-                         GoalsPG>2.3|
-                         (GoalsPG > 1.5 & GoalsAPG >1.5)|
-                         (GoalsPG < 1 & GoalsAPG <1)),
-              aes(GoalsPG,GoalsAPG,label=Squad)) +
-    geom_vline(xintercept=mean(goals_df$GoalsPG)) +
-    geom_hline(yintercept=mean(goals_df$GoalsPG))                                 
-  coord_flip()
+ggplot(goals_df) +
+  geom_vline(xintercept=mean(goals_df$GoalsAPG),colour="white",alpha=0.5) +
+  geom_hline(yintercept=mean(goals_df$GoalsPG),colour="white",alpha=0.5)   +
+  geom_point(aes(GoalsPG,GoalsAPG),shape=21,fill="#E172A8",size=3) +
+  ggrepel::geom_text_repel(data=goals_df %>% 
+                             filter(GoalsAPG>2.3|
+                                      GoalsPG>2.3|
+                                      (GoalsPG > 1.6 & GoalsAPG >1.6)|
+                                      (GoalsPG < 1 & GoalsAPG <1)|
+                                      (GoalsPG > 2& GoalsAPG > mean(goals_df$GoalsPG))),
+                           aes(GoalsPG,GoalsAPG,label=Squad),family="Spartan-Medium",color="#4CACE2",size=4) +
+annotate("label",x=3,y=2.5,label="Exciting!",colour="#120E41",family="Spartan-Light",size=4) +
+  annotate("label",x=.5,y=2.5,label="Pretty bad",colour="#120E41",family="Spartan-Light",size=4) +
+  annotate("label",x=3,y=.5,label="Pretty good",colour="#120E41",family="Spartan-Light",size=4) +
+  annotate("label",x=.5,y=.5,label="Boring",colour="#120E41",family="Spartan-Light",size=4) +
+  labs(x="Goals per game",
+       y="Goals conceded per game",
+       title="How many do team score and concede per game?",
+       subtitle = "Teams with minimum of 15 games this season",
+       caption = "@RobinWilhelmus\nData: Statsbomb via FBref") +
+  theme(plot.background = element_rect(fill="#120E41", colour="#120E41"),
+        panel.background = element_rect(fill="#120E41", colour="#120E41"),
+        text = element_text(family = "Spartan-Medium", colour="#4CACE2"),
+        plot.title = element_text(family = "Spartan-Medium", colour="white"),
+        plot.subtitle = element_text(family = "Spartan-Medium", colour="#4CACE2"),
+        panel.grid.major = element_line(size=0.05),
+        panel.grid.minor = element_blank(),
+        axis.text =element_text(family = "Spartan-Medium", colour="#4CACE2"),
+        axis.text.y =element_text(family = "Spartan-Medium", colour="white"),
+        plot.caption = element_text( size = 8),
+        legend.position = "none")
+ggsave("goals.png", width=10,height=12,device=png)
+
+coord_flip()
