@@ -1,0 +1,42 @@
+library(tidyverse)
+library(worldfootballR)
+install.packages("ggrepel")
+
+leagues <- read.csv("https://raw.githubusercontent.com/JaseZiv/worldfootballR_data/master/raw-data/all_leages_and_cups/all_competitions.csv") %>%
+  filter(tier == "1st") %>%
+  filter(season_end_year == 2022) %>%
+  filter( !is.na(country)) 
+i<-2
+
+comps <- list()
+for(i in 2:nrow(leagues)){
+df <- get_season_team_stats(country = leagues$country[i], gender = "M", 
+                            season_end_year = "2022", tier = "1st", stat_type = "league_table") %>%
+  group_by(Competition_Name,Country,Squad) %>%
+  summarise(Goals = sum(GF),
+            GoalsA = sum(GA),
+            matches = (sum(MP)/1),
+            GoalsPG = Goals/matches,
+            GoalsAPG = GoalsA/matches)
+print(sum(df$Goals))
+comps[[i]] <- df
+}
+
+
+goals_df <- data.table::rbindlist(comps) %>%
+  filter(matches > 15) %>%
+  arrange(-GoalsPG) %>%
+  unique() 
+
+
+  ggplot(goals_df) +
+  geom_point(aes(GoalsPG,GoalsAPG)) +
+    ggrepel::geom_text_repel(data=goals_df %>% 
+                filter(GoalsAPG>2.3|
+                         GoalsPG>2.3|
+                         (GoalsPG > 1.5 & GoalsAPG >1.5)|
+                         (GoalsPG < 1 & GoalsAPG <1)),
+              aes(GoalsPG,GoalsAPG,label=Squad)) +
+    geom_vline(xintercept=mean(goals_df$GoalsPG)) +
+    geom_hline(yintercept=mean(goals_df$GoalsPG))                                 
+  coord_flip()
