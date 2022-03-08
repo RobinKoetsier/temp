@@ -1,0 +1,64 @@
+
+library(worldfootballR)
+library(tidyverse)
+
+df <- get_match_results(country = "NED", gender = "M", season_end_year = 2022, tier = "2nd")  %>% 
+  mutate(result = case_when(
+    HomeGoals > AwayGoals ~ "H",
+    HomeGoals < AwayGoals ~ "A",
+    TRUE ~ "D"
+  )) 
+
+
+df.ajax <- df %>%
+  filter(Home == "Jong Ajax" |
+           Away == "Jong Ajax") %>%
+  mutate(winner = case_when(
+    Home == "Jong Ajax" & result == "H" ~ "Jong Ajax",
+    Away == "Jong Ajax" & result == "A" ~ "Jong Ajax",
+    result == "D" ~ "Draw",
+    TRUE ~ "Opponent"
+  )) %>%
+  mutate(points = case_when(
+    winner == "Jong Ajax" ~ 3,
+    winner == "Opponent" ~ 0,
+    TRUE ~ 1
+  ))
+
+list.df <- list()
+for (i in 1 : length(df.ajax$MatchURL)) {
+  print(i)
+  temp <-  get_match_lineups(match_url = df.ajax$MatchURL[i])
+  list.df[[i]] <- temp
+  
+}
+line_up.df <- data.table::rbindlist(list.df) %>%
+  filter(Min > 0) %>%
+  filter(Team == "Jong Ajax")
+
+
+
+line_up.df %>%
+  group_by(Player_Name) %>%
+  summarise(n = n()) %>%
+  arrange(-n)
+
+temp <- left_join(line_up.df,df.ajax) %>%
+  group_by(Player_Name) %>%
+  summarise(n = n(),
+            points = sum(points)/n) %>%
+  arrange(-n)
+
+df.ajax1 <- fb_team_player_stats(team_urls= "https://fbref.com/en/squads/19c3f8c4/Ajax-Stats", stat_type= 'standard') %>%
+  filter(Min_Playing_Time > 90)
+
+
+temp <- left_join(line_up.df,df.ajax) %>%
+  group_by(Home,Away) %>%
+  filter(Player_Name %in% df.ajax1$Player) %>%
+  summarise(n = n(),
+            points = sum(points)/n) %>%
+  arrange(-n) 
+
+temp
+
