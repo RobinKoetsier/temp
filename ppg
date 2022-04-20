@@ -1,5 +1,13 @@
+library(tidyverse)
+library(worldfootballR)
+library(data.table)
+library(gt)
+library(gtExtras)
+library(paletteer)
 
-fixtures <- get_match_results(country = "NED", gender = "M", season_end_year = 2022, tier = "1st")  %>%
+
+
+fixtures <- get_match_results(country = "NED", gender = "M", season_end_year = c(2022), tier = "1st")  %>%
   select(Home, HomeGoals,Away,AwayGoals)
 
 results <- fixtures %>%
@@ -13,36 +21,18 @@ results <- fixtures %>%
 
 Home_ppg <- results %>% 
   group_by(Home) %>%
-  summarise(Team = Home,
-         p = sum(HomeP),
-         n=n()) %>%
-  ungroup() %>%
-  select(Team,p) %>%
-  unique()
-         
+  summarise(hppg = sum(HomeP)/n())
+
 Away_ppg <-  results %>% 
   group_by(Away) %>%
-  summarise(Team = Away,
-            p = sum(AwayP),
-            n=n()) %>%
-  ungroup() %>%
-  select(Team,p) %>%
-  unique()
-
-points <- rbind(Home_ppg,Away_ppg) %>%
-  group_by(Team) %>%
-  summarise(ppg=sum(p)/21)
+  summarise(appg = sum(AwayP)/n())
 
 remaining <- fixtures %>%
   filter(is.na(HomeGoals)) %>%
-  left_join(points, by = c("Home"="Team")) %>%
-  mutate(hppg=ppg) %>%
-  select(-ppg) %>%
-  left_join(points, by = c("Away"="Team")) %>%
-  mutate(appg=ppg) %>%
-  select(-ppg) 
-
-
+  left_join(Home_ppg) %>%
+  left_join(Away_ppg) %>%
+  filter(Home != "Vitesse" |
+           Away != "Sparta R'dam")
 
 teams <- unique(remaining$Home)
 teamslist <- list()
@@ -58,72 +48,91 @@ for(i in 1:length(teams)){
     select(Team, opp_strength) 
   
   df <- df %>%
-    mutate(match = 1:nrow(df))
+    mutate(match = 30:34)
   
   teamslist[[i]] <- df
 }
-
-
+mycols3 <- c("#120E41", "#E172A8") #Set colours for heat map, pick as many as you like. 
+df %>% gt()
 strength <- do.call(rbind, unname(teamslist))
+  
 
 df_gt <- pivot_wider(strength, names_from=match,values_from = opp_strength) 
 
 
-is.numeric(df_gt$`2`)
-rowMeans(df_gt)
-
 df_gt %>%
+  rowwise() %>%
+  
+  mutate(data = list(c_across(-c(Team)))) %>%
+  ungroup() %>%
   mutate(avg = rowMeans(df_gt[,-1])) %>%
+  #mutate(avg = runif(18,.5,2.5) ) %>%
+  #mutate(avg = ifelse(Team %in% c("Sparta R'dam","Vitesse"),rowMeans(df_gt[,-1]),rowMeans(df_gt[,c(-1,-7)]))) %>%
   arrange(-avg) %>%
+ 
   gt() %>%
   tab_header(
     title = md("**Strength of opponents during remaining games**"),
     subtitle = md("Points per game of opponent. Home and away seperated")
   ) %>%
   fmt_number(
-    columns = c(`1`:avg),
+    columns = c(`30`:`34`,avg),
     decimals = 2
   ) %>%
-  data_color(
-    columns = c(`1`:avg),
-    colors = scales::col_numeric(
-      # Using a function from paletteer to generate a vector of colors
-      # Note that you need to wrap paletteer_d outputs in as.character()
-      palette = as.character(paletteer::paletteer_d(#"scico::berlin"
-        "ggsci::red_material"
-        , n = 5)),
-      # Domain is from scales::col_numeric
-      # Domain = The possible values that can be mapped
-      # We don't HAVE to set a range for this since
-      # we're using it inside data_color()
-      domain = NULL
-    )
-  ) %>% 
+  
   tab_style(
     style = list(
-      cell_borders(sides = "left", color = "black", weight = px(3))
+      cell_borders(sides = "left", color = "white", weight = px(3))
     ),
     locations = cells_body(
       # entire column
       columns = c(avg)
     )
   ) %>%
+
+   gt_sparkline(data,label=FALSE,line_color = "#E172A8",range_colors = c(NA,NA)) %>%
+  gt_plt_bar(column = avg, keep_column = FALSE, width = 50,text_color = "white",scale_type = "number",color="#E172A8",
+             accuracy = 0.01, font_family = "Roboto",size=10, text_hjust =-.2) %>%
+  cols_label(
+    avg = md("**Average**"),
+    Team = "",
+    data="Timeline"
+    ) %>%
   opt_table_font(
     font = list(
       google_font(name = "Roboto"),
       "Serif"
     )
   )  %>%
+  cols_align(
+   
+    align = "center",
+    columns = c(`30`:avg)
+  ) %>%
   tab_style(
     style = cell_borders(sides = "bottom", color = "black", weight = px(3)),
     locations = cells_body(rows = 18)
   ) %>%
   data_color(
-    columns = c(`1`:`13`),
-    colors = scales::col_numeric(
-      palette = paletteer::paletteer_d(
-        palette = "ggsci::red_material", n=7
-      ) %>% as.character(),
-      domain = NULL
-    )
-  ) 
+    #columns = c(`1`:"avg"),
+    columns = c(`30`:`34`),
+    colors = mycols3
+  )  %>%
+  tab_options(table.background.color = "#120E41")%>%
+  tab_source_note(md("Data: fbref | @RobinWilhelmus")
+  )  %>%
+  opt_table_font(font = "Roboto Mono"
+  )  %>%
+
+  gtsave(filename = "graphs/ppg2.png",vwidth = 1000, zoom = 6)
+
+
+
+
+
+layout <- "
+BBA
+BBA
+BBA
+"
+p + g + plot_layout(design = layout)
