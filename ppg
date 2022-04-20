@@ -48,7 +48,7 @@ for(i in 1:length(teams)){
     select(Team, opp_strength) 
   
   df <- df %>%
-    mutate(match = 30:34)
+    mutate(match = 30:34)  #set the remaining matchdays
   
   teamslist[[i]] <- df
 }
