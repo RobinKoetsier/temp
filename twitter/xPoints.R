@@ -1,7 +1,7 @@
 library(tidyverse)
 library(worldfootballR)
 # Only fill in the comp_id
-comp_id = 87
+comp_id = 40
 league_matches <- fotmob_get_league_matches(
  league_id = comp_id
 ) 
@@ -33,6 +33,82 @@ xG_table <- shots_temp %>%
               group_by(opponent) %>%
               summarise(xGA = sum(expected_goals)),by=c("team_name" = "opponent"))
 head(xG_table)
+
+calculateChance<-function(team1,team2,p){
+  
+  home = 0
+  away = 0
+  draw = 0
+  homeP = 0
+  awayP = 0
+  drawP = 0
+  
+  for(i in 1:p){
+    matchWinner <- calculateWinner(team1,team2)
+    
+    if(matchWinner == "home"){
+      home <- home+1
+      homeP <- homeP+3
+    }else if(matchWinner == "away"){
+      
+      away <- away+1
+      awayP <- awayP+3
+    }else{
+      draw <- draw +1
+      awayP <- awayP+1
+      homeP <- homeP+1
+    }
+  }
+  
+  home = paste0(home/(p/100),"%")
+  away = paste0(away/(p/100),"%")
+  draw = paste0(draw/(p/100),"%")
+  homeP = homeP/p
+  awayP = awayP/p
+  
+  chances <- paste0("Home win: ",home,"% | Draw: ",draw,"% | Away win: ",away,"%")
+  game <- data.frame(home,draw,away,homeP,awayP)
+  return(game)
+}
+
+# function that returns if a shot becomes a goal and counts the goals
+testShots<-function(XG){
+  Goals = 0
+  XG[is.na(XG)] <- 0
+  for(i in 1:length(XG)){
+    if(runif(1, 0.0, 1.0)<=XG[i]){
+      
+      Goals <- Goals + 1
+    }else{
+      
+    }
+  }
+  
+  return(Goals)
+}  
+
+# function that calculates the winner by comparing the number of goals of the two teams
+calculateWinner <- function(home,away){
+  HomeGoals = 0
+  AwayGoals = 0
+  
+  HomeGoals <- testShots(home)
+  AwayGoals <- testShots(away)
+  
+  #diffTemp <- (HomeGoals - AwayGoals)
+  
+  #diff <- append(diff,diffTemp)
+  if(HomeGoals > AwayGoals){
+    
+    return("home")
+  }else if(AwayGoals > HomeGoals){
+    
+    return("away")
+  }else{
+    
+    return("draw")
+  }
+}
 
 plot_func <- function(df){
   calculateChance(pull(df %>% filter(team_id == home_team_id),expected_goals),
