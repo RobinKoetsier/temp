@@ -2,7 +2,7 @@ library(tidyverse)
 library(worldfootballR)
 # Only fill in the comp_id
 leagues <- read.csv("https://raw.githubusercontent.com/JaseZiv/worldfootballR_data/master/raw-data/fotmob-leagues/all_leagues.csv")
-
+#Of course it only works if xG is available.
 comp_id = 40
 league_matches <- fotmob_get_league_matches(
  league_id = comp_id
