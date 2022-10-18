@@ -1,6 +1,8 @@
 library(tidyverse)
 library(worldfootballR)
 # Only fill in the comp_id
+leagues <- read.csv("https://raw.githubusercontent.com/JaseZiv/worldfootballR_data/master/raw-data/fotmob-leagues/all_leagues.csv")
+
 comp_id = 40
 league_matches <- fotmob_get_league_matches(
  league_id = comp_id
@@ -22,8 +24,7 @@ shots_temp <- match_details %>%
          opponent = case_when(team_id == home_team_id ~ away_team,
                               team_id == away_team_id ~ home_team))
 
-leagues <- read.csv("https://raw.githubusercontent.com/JaseZiv/worldfootballR_data/master/raw-data/fotmob-leagues/all_leagues.csv")
-head(leagues)
+
 xG_table <- shots_temp %>%
   mutate(expected_goals = replace_na(expected_goals,0)) %>% #replace the NA for own goals to 0
   group_by(team_name) %>%
